@@ -15,7 +15,7 @@ with col2:
     </h1>
     """, unsafe_allow_html=True)
 with col1:
-    st.image("image.png", width = 150)
+    st.image("Image.png", width = 150)
 col10, col11, col12 = st.sidebar.columns([1,2,1]) #columns for sidebar
 with col11:
     st.image("image.png", use_container_width="true")

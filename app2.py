@@ -36,13 +36,11 @@ st.markdown("""
 
 
 #Price predictionssss + Sliders, filters
-price = 2000000
-
-st.sidebar.markdown("Prperty Basics")
-st.sidebar.selectbox("Location", ["Mumbai", "Delhi", "Bengaluru", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Kanpur", "Nagpur", "Indore", "Bhopal", "Patna", "Surat", "Vadodara", "Coimbatore", "Kochi", "Thiruvananthapuram", "Visakhapatnam", "Vijayawada", "Nashik", "Aurangabad", "Amritsar", "Chandigarh", "Ludhiana", "Jalandhar", "Ranchi", "Raipur", "Bhubaneswar", "Guwahati", "Shillong", "Imphal", "Agartala", "Aizawl", "Itanagar", "Panaji", "Dehradun", "Shimla", "Srinagar", "Jammu", "Udaipur", "Jodhpur", "Gwalior", "Varanasi", "Allahabad", "Meerut", "Noida", "Gurugram"])
-st.sidebar.slider("Area sq.ft", 400, 10000, 1000)
-st.sidebar.slider("Number of Bedrooms", 1, 6, 2)
-st.sidebar.slider("Property Age", 0, 100, 5)
+st.sidebar.markdown("Property Basics")
+location = st.sidebar.selectbox("Location", ["Mumbai", "Delhi", "Bengaluru", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Kanpur", "Nagpur", "Indore", "Bhopal", "Patna", "Surat", "Vadodara", "Coimbatore", "Kochi", "Thiruvananthapuram", "Visakhapatnam", "Vijayawada", "Nashik", "Aurangabad", "Amritsar", "Chandigarh", "Ludhiana", "Jalandhar", "Ranchi", "Raipur", "Bhubaneswar", "Guwahati", "Shillong", "Imphal", "Agartala", "Aizawl", "Itanagar", "Panaji", "Dehradun", "Shimla", "Srinagar", "Jammu", "Udaipur", "Jodhpur", "Gwalior", "Varanasi", "Allahabad", "Meerut", "Noida", "Gurugram"])
+area = st.sidebar.slider("Area sq.ft", 400, 10000, 1000)
+bedroom = st.sidebar.slider("Number of Bedrooms", 1, 14, 2)
+age = st.sidebar.slider("Property Age", 0, 100, 5)
 
 st.sidebar.markdown("Amenities")
 parking = st.sidebar.checkbox("Parking")
@@ -50,11 +48,29 @@ gym = st.sidebar.checkbox("Gym")
 pool = st.sidebar.checkbox("Swimming Pool")
 security = st.sidebar.checkbox("24x7 Security")
 
+#Converting checkboxes to 0 or 1
+parking_val = 1 if parking else 0
+gym_val = 1 if gym else 0
+pool_val = 1 if pool else 0
+security_val = 1 if security else 0
+
+base_price = area * 500
+bedroom_price = bedroom * 50000
+age_price = age * 10000
+amenities_bonus = (
+    parking_val * 200000 +
+    gym_val * 150000 +
+    pool_val * 300000 +
+    security_val * 100000
+)
+
+price  = base_price + bedroom_price - age_price + amenities_bonus
+
 st.markdown(f"""
-<h1 style='text-align:center; color:#60A5FA; font-size:42px;'>
-$ {price:,.0f}
-</h1>
-""", unsafe_allow_html=True)
+    <h1 style='text-align:center; color:#60A5FA; font-size:42px;'>
+    $ {price:,.0f}
+    </h1>
+    """, unsafe_allow_html=True)
 
 
 #price prediction gaude

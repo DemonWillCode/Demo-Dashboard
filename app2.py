@@ -61,7 +61,7 @@ st.sidebar.markdown("---")
 st.markdown("<hr style='border:1px solid #1f2937'>", unsafe_allow_html=True)
 
 st.markdown("""
-<h2 style='color:#60A5FA;'>💡 What-If Price Calculator</h2>
+<h2 style='color:#60A5FA;'> What-If Price Calculator</h2>
 <p style='color:#9CA3AF;'>Adjust inputs in the sidebar to see real-time price prediction</p>
 """, unsafe_allow_html=True)
 

@@ -1,6 +1,17 @@
 import streamlit as st
-import plotly.graph_objects as go
+st.set_page_config(layout="wide")
 
+import plotly.graph_objects as go
+import joblib
+import pandas as pd
+import numpy as np
+
+# Load model
+model = joblib.load("delhi_price_model.pkl")
+columns = joblib.load("delhi_model_columns.pkl")
+columns = list(columns)
+
+# ---------------- HEADER ----------------
 col1, col2 = st.columns([1,8])
 with col2:
     st.markdown("""
@@ -15,104 +26,182 @@ with col2:
     </h1>
     """, unsafe_allow_html=True)
 with col1:
-    st.image("image.png", width = 150)
-col10, col11, col12 = st.sidebar.columns([1,2,1]) #columns for sidebar
+    st.image("image.png", width=150)
+
+# Sidebar image
+col10, col11, col12 = st.sidebar.columns([1,2,1])
 with col11:
-    st.image("image.png", use_container_width="true")
-st.set_page_config(layout = "wide")
+    st.image("image.png", use_container_width=True)
+
 st.sidebar.markdown("""
 <h2 style='color:#60A5FA; text-align:center;'>Dashboard Filters</h2>
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown("---")
 
-
-st.write("---")
+st.markdown("<hr style='border:1px solid #1f2937'>", unsafe_allow_html=True)
 
 st.markdown("""
 <h2 style='color:#60A5FA;'>💡 What-If Price Calculator</h2>
 <p style='color:#9CA3AF;'>Adjust inputs in the sidebar to see real-time price prediction</p>
 """, unsafe_allow_html=True)
 
-
-#Price predictionssss + Sliders, filters
+# ---------------- INPUTS ----------------
 st.sidebar.markdown("Property Basics")
-location = st.sidebar.selectbox("Location", ["Mumbai", "Delhi", "Bengaluru", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Kanpur", "Nagpur", "Indore", "Bhopal", "Patna", "Surat", "Vadodara", "Coimbatore", "Kochi", "Thiruvananthapuram", "Visakhapatnam", "Vijayawada", "Nashik", "Aurangabad", "Amritsar", "Chandigarh", "Ludhiana", "Jalandhar", "Ranchi", "Raipur", "Bhubaneswar", "Guwahati", "Shillong", "Imphal", "Agartala", "Aizawl", "Itanagar", "Panaji", "Dehradun", "Shimla", "Srinagar", "Jammu", "Udaipur", "Jodhpur", "Gwalior", "Varanasi", "Allahabad", "Meerut", "Noida", "Gurugram"])
+
+location = st.sidebar.selectbox("Location", [
+"Burari", "Dwarka Mor", "Jamia Nagar", "Noida",
+"Om Nagar", "Sector 10 Dwarka", "Sector 11 Dwarka",
+"Sector 12 Dwarka", "Sector 19 Dwarka", "Sector 22 Dwarka",
+"Sector 4 Dwarka", "Sector 6 Dwarka", "Uttam Nagar", "Vasant Kunj"
+])
+
 area = st.sidebar.slider("Area sq.ft", 400, 10000, 1000)
 bedroom = st.sidebar.slider("Number of Bedrooms", 1, 14, 2)
 age = st.sidebar.slider("Property Age", 0, 100, 5)
 
 st.sidebar.markdown("Amenities")
+
 parking = st.sidebar.checkbox("Parking")
 gym = st.sidebar.checkbox("Gym")
 pool = st.sidebar.checkbox("Swimming Pool")
 security = st.sidebar.checkbox("24x7 Security")
 
-#Converting checkboxes to 0 or 1
+resale = st.sidebar.checkbox("Resale Property")
+garden = st.sidebar.checkbox("Landscaped Gardens")
+indoor = st.sidebar.checkbox("Indoor Games")
+intercom = st.sidebar.checkbox("Intercom")
+sports = st.sidebar.checkbox("Sports Facility")
+club = st.sidebar.checkbox("Club House")
+power = st.sidebar.checkbox("Power Backup")
+gas = st.sidebar.checkbox("Gas Connection")
+ac = st.sidebar.checkbox("AC")
+wifi = st.sidebar.checkbox("Wifi")
+children = st.sidebar.checkbox("Children Play Area")
+lift = st.sidebar.checkbox("Lift Available")
+
+# ---------------- CONVERSION ----------------
 parking_val = 1 if parking else 0
 gym_val = 1 if gym else 0
 pool_val = 1 if pool else 0
 security_val = 1 if security else 0
 
-base_price = area * 500
-bedroom_price = bedroom * 50000
-age_price = age * 10000
-amenities_bonus = (
-    parking_val * 200000 +
-    gym_val * 150000 +
-    pool_val * 300000 +
-    security_val * 100000
+resale_val = 1 if resale else 0
+garden_val = 1 if garden else 0
+indoor_val = 1 if indoor else 0
+intercom_val = 1 if intercom else 0
+sports_val = 1 if sports else 0
+club_val = 1 if club else 0
+power_val = 1 if power else 0
+gas_val = 1 if gas else 0
+ac_val = 1 if ac else 0
+wifi_val = 1 if wifi else 0
+children_val = 1 if children else 0
+lift_val = 1 if lift else 0
+
+# ---------------- MODEL INPUT ----------------
+input_data = dict.fromkeys(columns, 0)
+
+# Basic
+input_data["Area"] = area
+input_data["No._of_Bedrooms"] = bedroom
+
+# Amenities mapping
+input_data["Resale"] = resale_val
+input_data["LandscapedGardens"] = garden_val
+input_data["IndoorGames"] = indoor_val
+input_data["Intercom"] = intercom_val
+input_data["SportsFacility"] = sports_val
+input_data["ClubHouse"] = club_val
+input_data["24X7Security"] = security_val
+input_data["PowerBackup"] = power_val
+input_data["CarParking"] = parking_val
+input_data["Gasconnection"] = gas_val
+input_data["AC"] = ac_val
+input_data["Wifi"] = wifi_val
+input_data["Children'splayarea"] = children_val
+input_data["LiftAvailable"] = lift_val
+
+# ---------------- ENGINEERED FEATURES ----------------
+total_amenities = (
+    parking_val + gym_val + pool_val + security_val +
+    garden_val + indoor_val + intercom_val + sports_val +
+    club_val + power_val + gas_val + ac_val +
+    wifi_val + children_val + lift_val
 )
 
-price  = base_price + bedroom_price - age_price + amenities_bonus
+input_data["Total_Amenities"] = total_amenities
+input_data["Amenity_Score"] = total_amenities * 10
+input_data["Bedroom_Density"] = bedroom / area if area != 0 else 0
+input_data["Price_per_sqft"] = 5000  # safe default
 
+# ---------------- LOCATION ----------------
+location_col = f"Location_{location}"
+
+if location_col in input_data:
+    input_data[location_col] = 1
+
+# ---------------- PREDICTION ----------------
+input_df = pd.DataFrame([input_data])
+input_df = input_df[columns]
+
+price = model.predict(input_df)[0]
+
+# Adjust age manually
+price -= age * 10000
+
+# Safety
+if np.isnan(price) or np.isinf(price):
+    price = 0
+
+price = max(price, 0)
+
+# ---------------- DISPLAY ----------------
 st.markdown(f"""
-    <h1 style='text-align:center; color:#60A5FA; font-size:42px;'>
-    $ {price:,.0f}
-    </h1>
-    """, unsafe_allow_html=True)
+<h1 style='
+text-align:center;
+color:#60A5FA;
+text-shadow: 0px 0px 20px rgba(96,165,250,0.6);
+'>
+₹ {price:,.0f}
+</h1>
+""", unsafe_allow_html=True)
 
+st.caption("💡 AI-powered price prediction")
 
-#price prediction gaude
+# ---------------- GAUGE ----------------
 def price_gauge(price):
+    max_val = max(price * 1.5, 1000000)
+
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=price,
-        title={'text': "Price Level"},
         number={'valueformat': ',d'},
+        title={'text': "Price Level"},
         gauge={
-            'axis': {'range': [0, 10000000]},  # adjust based on your data
-            
+            'axis': {'range': [0, max_val]},
             'bar': {'color': "#A0B9D7"},
-            
             'steps': [
-                {'range': [0, 3000000], 'color': "green"},
-                {'range': [3000000, 7000000], 'color': "yellow"},
-                {'range': [7000000, 10000000], 'color': "red"},
+                {'range': [0, max_val*0.3], 'color': "green"},
+                {'range': [max_val*0.3, max_val*0.7], 'color': "yellow"},
+                {'range': [max_val*0.7, max_val], 'color': "red"},
             ],
         }
     ))
-    
+
     fig.update_layout(
         height=350,
         paper_bgcolor="rgba(0,0,0,0)",
         font={'color': "white"}
     )
-    
+
     return fig
 
-col1, col2, col3 = st.columns([1, 2, 1])
-
+col1, col2, col3 = st.columns([1,2,1])
 with col2:
-    st.plotly_chart(price_gauge(price), use_container_width="true")
+    st.plotly_chart(price_gauge(price), use_container_width=True)
 
-
-
-
-
-
-#Metric cardsss
-
+# ---------------- CARDS ----------------
 def card(title, value):
     st.markdown(f"""
     <div style="
@@ -122,17 +211,21 @@ def card(title, value):
         border-radius:40px;
         text-align:center;
         box-shadow: 0px 6px 25px rgba(0,0,0,0.6);
-        transition: 0.3s;
     ">
-        <h4 style="color:#9CA3AF; margin-bottom:10px;">{title}</h4>
-        <h1 style="color:white; margin:0;">{value}</h1>
+        <h4 style="color:#9CA3AF;">{title}</h4>
+        <h1 style="color:white;">{value}</h1>
     </div>
     """, unsafe_allow_html=True)
-st.write("---")
+
+st.markdown("<hr style='border:1px solid #1f2937'>", unsafe_allow_html=True)
+
 col3, col4, col5 = st.columns(3)
+
 with col3:
-    card("Average price", "$50k")
+    card("Average price", f"₹ {int(price*0.8):,}")
 with col4:
-    card("Max Price", "$90K")
+    card("Max Price", f"₹ {int(price*1.2):,}")
 with col5:
-    card("Min Price", "$20K")
+    card("Min Price", f"₹ {int(price*0.6):,}")
+
+st.markdown("<hr style='border:1px solid #1f2937'>", unsafe_allow_html=True)

@@ -5,6 +5,25 @@ import plotly.graph_objects as go
 import joblib
 import pandas as pd
 import numpy as np
+import gdown
+import os
+
+# Download model
+if not os.path.exists("delhi_price_model.pkl"):
+    gdown.download(
+        "https://drive.google.com/uc?id=1cbRacehmhW0PippvxCY5bejg3gwdpII6",
+        "delhi_price_model.pkl",
+        quiet=False
+    )
+
+# Download columns
+if not os.path.exists("delhi_model_columns.pkl"):
+    gdown.download(
+        "https://drive.google.com/uc?id=1f4Ze50-X08zkjeCG4Gui6Vux0WkI8h6w",
+        "delhi_model_columns.pkl",
+        quiet=False
+    )
+
 
 # Load model
 model = joblib.load("delhi_price_model.pkl")

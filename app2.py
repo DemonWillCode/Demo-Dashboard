@@ -259,11 +259,6 @@ st.markdown("<hr style='border:1px solid #1f2937'>", unsafe_allow_html=True)
 
 # ---------------- Charts ----------------
 
-st.markdown("""
-<h2 style='color:#60A5FA;'>
-Amenities vs Property Price
-</h2>
-""", unsafe_allow_html=True)
 
 df = pd.read_csv("d1.csv")
 

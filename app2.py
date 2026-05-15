@@ -30,12 +30,14 @@ model = joblib.load("delhi_price_model.pkl")
 columns = joblib.load("delhi_model_columns.pkl")
 columns = list(columns)
 
+
+
 # ---------------- HEADER ----------------
-col1, col2 = st.columns([1,8])
+col1, col2 = st.columns([4.5,8])
 with col2:
     st.markdown("""
     <h1 style='
-        text-align:center;
+        text-align:left;
         color:#60A5FA;
         font-weight:700;
         margin-top: 20px;
@@ -45,10 +47,10 @@ with col2:
     </h1>
     """, unsafe_allow_html=True)
 with col1:
-    st.image("image.png", width=150)
+    st.image("image.png", width=300)
 
 # Sidebar image
-col10, col11, col12 = st.sidebar.columns([1,2,1])
+col10, col11, col12 = st.sidebar.columns([1,10,1])
 with col11:
     st.image("image.png", use_container_width=True)
 
@@ -61,7 +63,7 @@ st.sidebar.markdown("---")
 st.markdown("<hr style='border:1px solid #1f2937'>", unsafe_allow_html=True)
 
 st.markdown("""
-<h2 style='color:#60A5FA;'> What-If Price Calculator</h2>
+<h2 style='color:#60A5FA;'>💡 What-If Price Calculator</h2>
 <p style='color:#9CA3AF;'>Adjust inputs in the sidebar to see real-time price prediction</p>
 """, unsafe_allow_html=True)
 
@@ -75,17 +77,24 @@ location = st.sidebar.selectbox("Location", [
 "Sector 4 Dwarka", "Sector 6 Dwarka", "Uttam Nagar", "Vasant Kunj"
 ])
 
-area = st.sidebar.slider("Area sq.ft", 400, 10000, 1000)
+choice = st.sidebar.radio(
+    "Select Input Type",
+    ["Slider", "Manual Input"]
+)
+
+if choice == "Slider":
+    area = st.sidebar.slider("Area sq.ft", 0, 10000, 400)
+
+else:
+    area = st.sidebar.number_input("Area sq.ft",min_value=0,max_value=10000,value=400,step=1)
+
 bedroom = st.sidebar.slider("Number of Bedrooms", 1, 14, 2)
 age = st.sidebar.slider("Property Age", 0, 100, 5)
 
 st.sidebar.markdown("Amenities")
 
 parking = st.sidebar.checkbox("Parking")
-gym = st.sidebar.checkbox("Gym")
-pool = st.sidebar.checkbox("Swimming Pool")
 security = st.sidebar.checkbox("24x7 Security")
-
 resale = st.sidebar.checkbox("Resale Property")
 garden = st.sidebar.checkbox("Landscaped Gardens")
 indoor = st.sidebar.checkbox("Indoor Games")
@@ -101,10 +110,7 @@ lift = st.sidebar.checkbox("Lift Available")
 
 # ---------------- CONVERSION ----------------
 parking_val = 1 if parking else 0
-gym_val = 1 if gym else 0
-pool_val = 1 if pool else 0
 security_val = 1 if security else 0
-
 resale_val = 1 if resale else 0
 garden_val = 1 if garden else 0
 indoor_val = 1 if indoor else 0
@@ -141,9 +147,9 @@ input_data["Wifi"] = wifi_val
 input_data["Children'splayarea"] = children_val
 input_data["LiftAvailable"] = lift_val
 
-# ---------------- ENGINEERED FEATURES ----------------
+#---------------- ENGINEERED FEATURES ----------------
 total_amenities = (
-    parking_val + gym_val + pool_val + security_val +
+    parking_val + security_val +
     garden_val + indoor_val + intercom_val + sports_val +
     club_val + power_val + gas_val + ac_val +
     wifi_val + children_val + lift_val
@@ -152,7 +158,9 @@ total_amenities = (
 input_data["Total_Amenities"] = total_amenities
 input_data["Amenity_Score"] = total_amenities * 10
 input_data["Bedroom_Density"] = bedroom / area if area != 0 else 0
-input_data["Price_per_sqft"] = 5000  # safe default
+input_data["Price_per_sqft"] = 5000
+
+
 
 # ---------------- LOCATION ----------------
 location_col = f"Location_{location}"
@@ -186,11 +194,11 @@ text-shadow: 0px 0px 20px rgba(96,165,250,0.6);
 </h1>
 """, unsafe_allow_html=True)
 
-st.caption("💡 AI-powered price prediction")
+st.caption(" AI-powered price prediction")
 
 # ---------------- GAUGE ----------------
 def price_gauge(price):
-    max_val = max(price * 1.5, 1000000)
+    max_val = 25000000
 
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
@@ -248,3 +256,112 @@ with col5:
     card("Min Price", f"₹ {int(price*0.6):,}")
 
 st.markdown("<hr style='border:1px solid #1f2937'>", unsafe_allow_html=True)
+
+# ---------------- Charts ----------------
+
+st.markdown("""
+<h2 style='color:#60A5FA;'>
+Amenities vs Property Price
+</h2>
+""", unsafe_allow_html=True)
+
+df = pd.read_csv("d1.csv")
+
+
+amenity_price = (
+    df.groupby("Total_Amenities")["Price"]
+    .mean()
+)
+
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(
+    x=amenity_price.index,
+    y=amenity_price.values,
+    mode='lines+markers'
+))
+
+fig.update_layout(
+    title="Average Property Price by Amenities",
+
+    font=dict(color="white"),
+
+    xaxis=dict(
+        title="Number of Amenities",
+    ),
+
+    yaxis=dict(
+        title="Average Price",
+    ),
+
+    height=500
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+
+#bar
+
+location_price = (
+    df.groupby("Location")["Price_per_sqft"]
+    .mean()
+    .sort_values(ascending=False)
+)
+
+fig = go.Figure()
+
+fig.add_trace(go.Bar(
+    x=location_price.index,
+    y=location_price.values,
+    marker_color="#60A5FA"
+))
+
+fig.update_layout(
+    title="Average Price per Sqft by Location",
+
+    xaxis=dict(
+        title="Location",
+       
+    ),
+
+    yaxis=dict(
+        title="Price per Sqft",
+    ),
+
+    height=500
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+
+
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(
+    x=df["Area"],
+    y=df["Price"],
+
+    mode='markers',
+
+    marker=dict(
+        size=8,
+        color="#60A5FA",
+        opacity=0.7
+    )
+))
+
+fig.update_layout(
+    title="Area vs Property Price",
+
+    xaxis=dict(
+        title="Area (sq.ft)",
+    ),
+
+    yaxis=dict(
+        title="Property Price",
+    ),
+
+    height=500
+)
+
+st.plotly_chart(fig, use_container_width=True)

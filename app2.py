@@ -208,11 +208,13 @@ def price_gauge(price):
         gauge={
             'axis': {'range': [0, max_val]},
             'bar': {'color': "#A0B9D7"},
-            'steps': [
-                {'range': [0, max_val*0.3], 'color': "green"},
-                {'range': [max_val*0.3, max_val*0.7], 'color': "yellow"},
-                {'range': [max_val*0.7, max_val], 'color': "red"},
-            ],
+        'steps': [
+            {'range': [0, max_val*0.2], 'color': "#1e3a8a"},
+            {'range': [max_val*0.2, max_val*0.4], 'color': "#2563eb"},
+            {'range': [max_val*0.4, max_val*0.6], 'color': "#60a5fa"},
+            {'range': [max_val*0.6, max_val*0.8], 'color': "#93c5fd"},
+            {'range': [max_val*0.8, max_val], 'color': "#dbeafe"},
+        ]
         }
     ))
 

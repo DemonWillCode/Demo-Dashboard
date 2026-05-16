@@ -226,7 +226,7 @@ def price_gauge(price):
 
 col1, col2, col3 = st.columns([1,2,1])
 with col2:
-    st.plotly_chart(price_gauge(price), use_container_width=True)
+    st.plotly_chart(price_gauge(price))
 
 # ---------------- CARDS ----------------
 def card(title, value):

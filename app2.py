@@ -8,32 +8,11 @@ import numpy as np
 import gdown
 import os
 
-# Download model
-if not os.path.exists("delhi_price_model.pkl"):
-    gdown.download(
-        "https://drive.google.com/uc?id=1cbRacehmhW0PippvxCY5bejg3gwdpII6",
-        "delhi_price_model.pkl",
-        quiet=False
-    )
-
-# Download columns
-if not os.path.exists("delhi_model_columns.pkl"):
-    gdown.download(
-        "https://drive.google.com/uc?id=1f4Ze50-X08zkjeCG4Gui6Vux0WkI8h6w",
-        "delhi_model_columns.pkl",
-        quiet=False
-    )
-
-
-# Load model
-model = joblib.load("delhi_price_model.pkl")
-columns = joblib.load("delhi_model_columns.pkl")
-columns = list(columns)
-
 
 
 # ---------------- HEADER ----------------
 col1, col2 = st.columns([4.5,8])
+
 with col2:
     st.markdown("""
     <h1 style='
@@ -41,149 +20,215 @@ with col2:
         color:#60A5FA;
         font-weight:700;
         margin-top: 20px;
-        letter-spacing:1px;
+        letter-spacing:1px; 
     '>
     Real Estate Dashboard
     </h1>
     """, unsafe_allow_html=True)
+
 with col1:
     st.image("image.png", width=300)
 
-# Sidebar image
+
+# ---------------- SIDEBAR ----------------
+# Sidebar Logo
 col10, col11, col12 = st.sidebar.columns([1,10,1])
+
 with col11:
     st.image("image.png", use_container_width=True)
 
+# Sidebar Heading
 st.sidebar.markdown("""
-<h2 style='color:#60A5FA; text-align:center;'>Dashboard Filters</h2>
+<h2 style='color:#60A5FA; text-align:center;'>
+Dashboard Filters
+</h2>
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown("---")
 
-st.markdown("<hr style='border:1px solid #1f2937'>", unsafe_allow_html=True)
+st.markdown(
+    "<hr style='border:1px solid #1f2937'>",
+    unsafe_allow_html=True
+)
 
-st.markdown("""
-<h2 style='color:#60A5FA;'>💡 What-If Price Calculator</h2>
-<p style='color:#9CA3AF;'>Adjust inputs in the sidebar to see real-time price prediction</p>
-""", unsafe_allow_html=True)
 
-# ---------------- INPUTS ----------------
+# ---------------- LOAD MODEL ----------------
+# Load Trained Model and Metadata
+model = joblib.load("xgb_model.joblib")
+
+metadata = joblib.load("xgb_metadata.joblib")
+
+feature_names = metadata["feature_names"]
+
+binary_cols = metadata["binary_cols"]
+
+cities = metadata["cities"]
+
+location_map = metadata["location_map"]
+
+area_min, area_max = metadata["area_range"]
+
 st.sidebar.markdown("Property Basics")
 
-location = st.sidebar.selectbox("Location", [
-"Burari", "Dwarka Mor", "Jamia Nagar", "Noida",
-"Om Nagar", "Sector 10 Dwarka", "Sector 11 Dwarka",
-"Sector 12 Dwarka", "Sector 19 Dwarka", "Sector 22 Dwarka",
-"Sector 4 Dwarka", "Sector 6 Dwarka", "Uttam Nagar", "Vasant Kunj"
-])
 
+# ---------------- INPUTS ----------------
+# City Selection
+city = st.sidebar.selectbox(
+    "Select City",
+    cities
+)
+
+# Location Selection
+location = st.sidebar.selectbox(
+    "Select Location",
+    location_map[city]
+)
+
+# Input Type Selection
 choice = st.sidebar.radio(
     "Select Input Type",
     ["Slider", "Manual Input"]
 )
 
+# Area Input
 if choice == "Slider":
-    area = st.sidebar.slider("Area sq.ft", 0, 10000, 400)
+
+    area = st.sidebar.slider(
+        "Area sq.ft",
+        area_min,
+        area_max,
+        1000
+    )
 
 else:
-    area = st.sidebar.number_input("Area sq.ft",min_value=0,max_value=10000,value=400,step=1)
 
-bedroom = st.sidebar.slider("Number of Bedrooms", 1, 14, 2)
-age = st.sidebar.slider("Property Age", 0, 100, 5)
+    area = st.sidebar.number_input(
+        "Area sq.ft",
+        min_value=area_min,
+        max_value=area_max,
+        value=1000,
+        step=1
+    )
 
-st.sidebar.markdown("Amenities")
-
-parking = st.sidebar.checkbox("Parking")
-security = st.sidebar.checkbox("24x7 Security")
-resale = st.sidebar.checkbox("Resale Property")
-garden = st.sidebar.checkbox("Landscaped Gardens")
-indoor = st.sidebar.checkbox("Indoor Games")
-intercom = st.sidebar.checkbox("Intercom")
-sports = st.sidebar.checkbox("Sports Facility")
-club = st.sidebar.checkbox("Club House")
-power = st.sidebar.checkbox("Power Backup")
-gas = st.sidebar.checkbox("Gas Connection")
-ac = st.sidebar.checkbox("AC")
-wifi = st.sidebar.checkbox("Wifi")
-children = st.sidebar.checkbox("Children Play Area")
-lift = st.sidebar.checkbox("Lift Available")
-
-# ---------------- CONVERSION ----------------
-parking_val = 1 if parking else 0
-security_val = 1 if security else 0
-resale_val = 1 if resale else 0
-garden_val = 1 if garden else 0
-indoor_val = 1 if indoor else 0
-intercom_val = 1 if intercom else 0
-sports_val = 1 if sports else 0
-club_val = 1 if club else 0
-power_val = 1 if power else 0
-gas_val = 1 if gas else 0
-ac_val = 1 if ac else 0
-wifi_val = 1 if wifi else 0
-children_val = 1 if children else 0
-lift_val = 1 if lift else 0
-
-# ---------------- MODEL INPUT ----------------
-input_data = dict.fromkeys(columns, 0)
-
-# Basic
-input_data["Area"] = area
-input_data["No._of_Bedrooms"] = bedroom
-
-# Amenities mapping
-input_data["Resale"] = resale_val
-input_data["LandscapedGardens"] = garden_val
-input_data["IndoorGames"] = indoor_val
-input_data["Intercom"] = intercom_val
-input_data["SportsFacility"] = sports_val
-input_data["ClubHouse"] = club_val
-input_data["24X7Security"] = security_val
-input_data["PowerBackup"] = power_val
-input_data["CarParking"] = parking_val
-input_data["Gasconnection"] = gas_val
-input_data["AC"] = ac_val
-input_data["Wifi"] = wifi_val
-input_data["Children'splayarea"] = children_val
-input_data["LiftAvailable"] = lift_val
-
-#---------------- ENGINEERED FEATURES ----------------
-total_amenities = (
-    parking_val + security_val +
-    garden_val + indoor_val + intercom_val + sports_val +
-    club_val + power_val + gas_val + ac_val +
-    wifi_val + children_val + lift_val
+# Bedroom Input
+bedroom = st.sidebar.slider(
+    "Number of Bedrooms",
+    1,
+    10,
+    2
 )
 
-input_data["Total_Amenities"] = total_amenities
-input_data["Amenity_Score"] = total_amenities * 10
-input_data["Bedroom_Density"] = bedroom / area if area != 0 else 0
-input_data["Price_per_sqft"] = 5000
+
+# ---------------- AMENITIES ----------------
+# Amenities Selection
+st.sidebar.markdown("Amenities")
+
+selected_amenities = [
+
+    # Essential Amenities
+    "24X7Security",
+    "PowerBackup",
+    "CarParking",
+    "LiftAvailable",
+
+    # Internet & Utility
+    "Wifi",
+    "Gasconnection",
+
+    # Lifestyle Amenities
+    "Gymnasium",
+    "SwimmingPool",
+    "ClubHouse",
+    "AC",
+
+    # Nearby Facilities
+    "ATM",
+    "School"
+]
+
+binary_inputs = {}
+
+# Create Checkboxes
+for feature in selected_amenities:
+
+    display_name = (
+        feature
+        .replace("24X7", "24x7 ")
+        .replace("Children'splayarea", "Children Play Area")
+    )
+
+    binary_inputs[feature] = st.sidebar.checkbox(
+        display_name
+    )
 
 
+# ---------------- MODEL INPUT ----------------
+# Create Input Dictionary
+input_data = dict.fromkeys(feature_names, 0)
 
-# ---------------- LOCATION ----------------
-location_col = f"Location_{location}"
+# Basic Features
+input_data["Area"] = area
+input_data["No. of Bedrooms"] = bedroom
 
-if location_col in input_data:
-    input_data[location_col] = 1
+# Amenities Encoding
+for feature in selected_amenities:
+
+    input_data[feature] = int(
+        binary_inputs[feature]
+    )
+
+# Feature Engineering
+input_data["AmenityScore"] = sum(
+    input_data[col]
+    for col in selected_amenities
+)
+
+
+# ---------------- LOCATION ENCODING ----------------
+# Encode Selected Location
+location_means = metadata["location_means"]
+
+input_data["Location_Encoded"] = location_means.get(
+    location,
+    0
+)
+
+
+# ---------------- CREATE DATAFRAME ----------------
+# Create Prediction DataFrame
+input_df = pd.DataFrame([input_data])
+
+# Match Model Training Columns
+input_df = input_df[feature_names]
+
 
 # ---------------- PREDICTION ----------------
-input_df = pd.DataFrame([input_data])
-input_df = input_df[columns]
-
+# Predict Property Price
 price = model.predict(input_df)[0]
 
-# Adjust age manually
-price -= age * 10000
 
-# Safety
+# ---------------- SAFETY ----------------
+# Handle Invalid Predictions
 if np.isnan(price) or np.isinf(price):
     price = 0
 
 price = max(price, 0)
 
-# ---------------- DISPLAY ----------------
+
+# ---------------- DISPLAY ---------------
+# Prediction Heading
+st.markdown("""
+<h2 style='color:#60A5FA; text-align:center'>
+What-If Price Calculator
+</h2>
+
+<p style='color:#9CA3AF; text-align:center'>
+Adjust inputs in the sidebar to see real-time price prediction
+</p>
+""", unsafe_allow_html=True)
+
+
+# Predicted Price Display
 st.markdown(f"""
 <h1 style='
 text-align:center;
@@ -194,11 +239,12 @@ text-shadow: 0px 0px 20px rgba(96,165,250,0.6);
 </h1>
 """, unsafe_allow_html=True)
 
-st.caption(" AI-powered price prediction")
 
 # ---------------- GAUGE ----------------
+# Price Gauge Chart
 def price_gauge(price):
-    max_val = 25000000
+
+    max_val = 35000000
 
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
@@ -207,14 +253,14 @@ def price_gauge(price):
         title={'text': "Price Level"},
         gauge={
             'axis': {'range': [0, max_val]},
-            'bar': {'color': "#A0B9D7"},
-        'steps': [
-            {'range': [0, max_val*0.2], 'color': "#1e3a8a"},
-            {'range': [max_val*0.2, max_val*0.4], 'color': "#2563eb"},
-            {'range': [max_val*0.4, max_val*0.6], 'color': "#60a5fa"},
-            {'range': [max_val*0.6, max_val*0.8], 'color': "#93c5fd"},
-            {'range': [max_val*0.8, max_val], 'color': "#dbeafe"},
-        ]
+            'bar': {'color': "#EBF4FE"},
+            'steps': [
+                {'range': [0, max_val*0.2], 'color': "#afccf1"},
+                {'range': [max_val*0.2, max_val*0.4], 'color': "#93c5fd"},
+                {'range': [max_val*0.4, max_val*0.6], 'color': "#60a5fa"},
+                {'range': [max_val*0.6, max_val*0.8], 'color': "#2563eb"},
+                {'range': [max_val*0.8, max_val], 'color': "#1e3a8a"},
+            ]
         }
     ))
 
@@ -226,12 +272,18 @@ def price_gauge(price):
 
     return fig
 
+
+# Gauge Layout
 col1, col2, col3 = st.columns([1,2,1])
+
 with col2:
     st.plotly_chart(price_gauge(price))
 
+
 # ---------------- CARDS ----------------
+# Information Cards
 def card(title, value):
+
     st.markdown(f"""
     <div style="
         background: linear-gradient(145deg, #1e3a5f, #0f2a3f);
@@ -246,30 +298,55 @@ def card(title, value):
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("<hr style='border:1px solid #1f2937'>", unsafe_allow_html=True)
+st.markdown(
+    "<hr style='border:1px solid #1f2937'>",
+    unsafe_allow_html=True
+)
 
+
+# Cards Layout
 col3, col4, col5 = st.columns(3)
 
 with col3:
     card("Average price", f"₹ {int(price*0.8):,}")
+
 with col4:
     card("Max Price", f"₹ {int(price*1.2):,}")
+
 with col5:
     card("Min Price", f"₹ {int(price*0.6):,}")
 
-st.markdown("<hr style='border:1px solid #1f2937'>", unsafe_allow_html=True)
+st.markdown(
+    "<hr style='border:1px solid #1f2937'>",
+    unsafe_allow_html=True
+)
 
-# ---------------- Charts ----------------
 
+# ---------------- CHARTS ----------------
+# Section Heading
 st.markdown("""
 <h2 style='color:#60A5FA;'>
-Charts
+Amenities vs Property Price
 </h2>
 """, unsafe_allow_html=True)
 
-df = pd.read_csv("d1.csv")
+
+# ---------------- LOAD DATASET ----------------
+# Load Dataset
+df = pd.read_csv("real_estate_cleaned.csv")
+
+# Filter Dataset According to Selected City
+df = df[df["City"] == city]
+
+# Create Total Amenities Column
+df["Total_Amenities"] = df[binary_cols].sum(axis=1)
+
+# Create Price per Sqft Column
+df["Price_per_sqft"] = df["Price"] / df["Area"]
 
 
+# ---------------- CHART 1 ----------------
+# Amenities vs Price Chart
 amenity_price = (
     df.groupby("Total_Amenities")["Price"]
     .mean()
@@ -284,7 +361,7 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.update_layout(
-    title="Average Property Price by Amenities",
+    title=f"Average Property Price by Amenities - {city}",
 
     font=dict(color="white"),
 
@@ -302,12 +379,13 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 
-#bar
-
+# ---------------- CHART 2 ----------------
+# Price per Sqft by Location
 location_price = (
     df.groupby("Location")["Price_per_sqft"]
     .mean()
     .sort_values(ascending=False)
+    .head(15)
 )
 
 fig = go.Figure()
@@ -319,11 +397,10 @@ fig.add_trace(go.Bar(
 ))
 
 fig.update_layout(
-    title="Average Price per Sqft by Location",
+    title=f"Average Price per Sqft by Location - {city}",
 
     xaxis=dict(
         title="Location",
-       
     ),
 
     yaxis=dict(
@@ -336,7 +413,8 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 
-
+# ---------------- CHART 3 ----------------
+# Area vs Property Price Scatter Plot
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(
@@ -353,7 +431,7 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.update_layout(
-    title="Area vs Property Price",
+    title=f"Area vs Property Price - {city}",
 
     xaxis=dict(
         title="Area (sq.ft)",
@@ -367,3 +445,23 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

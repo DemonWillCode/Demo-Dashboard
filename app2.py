@@ -475,7 +475,7 @@ elif page == "Financial Tools":
         margin-bottom:25px;
     ">
         <h2 style='color:white;'>
-        🏠 EMI Calculator
+        EMI Calculator
         </h2>
         <p style='color:#9CA3AF;'>
         Calculate monthly EMI, total interest and loan payment
@@ -638,7 +638,6 @@ elif page == "About Project":
 
     - Python
     - Streamlit
-    - XGBoost
     - Pandas
     - NumPy
     - Plotly
@@ -683,21 +682,10 @@ elif page == "About Project":
     - Krunal Pilodekar — XGBoost model and feature engineering
     - Ayush Maurya — ML experimentation and evaluation
     - Pranav Kokare — Dataset preprocessing and validation
-    - Ashutosh Singh — GitHub and project management
+    - Ashutosh Singh — Streamlit tool development & Repository management
     """)
 
 
-    # ---------------- FUTURE WORK ----------------
-    st.markdown("""
-    ## Future Enhancements
-
-    - SHAP Explainable AI integration
-    - Automated model retraining
-    - Advanced recommendation systems
-    - Property comparison engine
-    - Interactive map visualizations
-    - Cloud database integration
-    """)
 
 
 

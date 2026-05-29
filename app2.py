@@ -330,7 +330,7 @@ if page == "Prediction Dashboard":
     # Section Heading
     st.markdown("""
     <h2 style='color:#60A5FA;'>
-    Amenities vs Property Price
+    Charts
     </h2>
     """, unsafe_allow_html=True)
 
@@ -427,11 +427,6 @@ if page == "Prediction Dashboard":
 
         mode='markers',
 
-        marker=dict(
-            size=8,
-            color="#60A5FA",
-            opacity=0.7
-        )
     ))
 
     fig.update_layout(
@@ -682,9 +677,8 @@ elif page == "About Project":
     - Krunal Pilodekar — XGBoost model and feature engineering
     - Ayush Maurya — ML experimentation and evaluation
     - Pranav Kokare — Dataset preprocessing and validation
-    - Ashutosh Singh — Streamlit tool development & Repository management
+    - Ashutosh Singh — EMI tool development & Repository management
     """)
-
 
 
 
